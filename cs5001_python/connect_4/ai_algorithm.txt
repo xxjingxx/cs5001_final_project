@@ -1,0 +1,46 @@
+Project: Connect Four
+AI algorithm
+
+Did you attempt to make your computer player very smart -- i.e., do something more clever than just pick a random legal move?
+If so, were you able to accomplish this? Is your computer player as smart as you would like?
+--Yes, it is smarter than picking random legal move. Specifically, it recognizes the number of same color disks in a row, and it can block three red disks, and it will place the fourth yellow disk if there are already three yellow disks in a row. However, this is not as smart as I would like.
+
+How did you determine which piece to play next? Tell us about your “pick next move” algorithm.
+--The pseudocode for my pick_next_move method is as follows: 
+   def pick_next_move():
+for each column of the disk_list:
+	get the available row for the column
+	based on the row and column, call get_move_score method to generate a score
+	keeps updating the highest score as we go over each possible location
+if there are more than one best scores:
+	randomly pick one column with the best score
+return column index
+		
+   def get_move_score(list, row, column):
+	initiate int score
+	traverse the lines in four directions (horizontal, vertical, and two diagonals):
+		initiate a window with length of 4 in the current line
+		if [row][column] is in the window:
+			call score_rule method to get current score 
+update the score to the highest if necessary
+	return score
+
+    def score_rule(window):
+	if 3 yellow disks in the window:
+		score =  200
+	elif 3 red disks in the window:
+		score = 100
+	elif 2 red disks in the window:
+		score = 20
+	elif 2 yellow disks in the window:
+		score = 15
+	elif 1 red or yellow disks in the window:
+		score = 10
+	elif no disk in the window:
+		score = 5
+
+How often did your computer program beat you, or your friends, or whoever tested it out for you?
+--Up to this point, my program is not able to beat me or my friends since it is not able to predict future moves.
+
+How would you improve it in the future?
+--Implementing a “predict” feature would be my next step. Specifically, based on one move, generate all possible next moves and even next-next moves, consider all the moves as a whole to generate a more precise score. I would also do more research on the score scale part. 

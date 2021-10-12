@@ -1,0 +1,372 @@
+Homework 12 - Connect 4
+Project: Connect Four
+
+Part 1.1 Design
+
+1. Object: 
+    To develop a fully-playable Connect Four game with Processing and Python
+
+2. Description of game: 
+    To play the game, each player will drop a disk alternatively into a column from above of the board. The object is to get four in a row horizontally, vertically, or diagonally before the opponent does. 
+
+    This computer game is designed to let users play against computer. In this game, users can choose the desired colume using mouse and drop red disks by pressing and releasing mouse from the top area of the colume. Once a red disk is dropped, a yellow disk representing computer will be dropped. Users and computer drop disks repeatly untill a winner is generated. If the board fills up completely and no winner is generated, then it is a draw.
+
+3. Approach:
+    3.1. Files
+        This program is devided and written into 4 files. The file name, type and purpuse are as follows:
+        ---------------------------------------------------------------------
+        (1) connect_four.pyde     => Processing file 
+        (2) game_controller.py    => GameController class
+        (3) board.py              => Board class
+        (4) disk.py               => Disk class
+        ---------------------------------------------------------------------
+    3.2. Data structures
+        (1) A Python nested list is used to store the disks dropped by each player. Red disk is represented by 1, and yellow disk is represented by 2.
+        (2) A list is served as a disk buffer to hold the disk that is ready to drop. Once the disk is dropped, the buffer will be cleared.
+        (3) A Python dictionary is used to store winner names and scores.
+    
+    3.3. Implementation logic
+        (1) Processing draw()
+            When draw() is called, the following events occur at every frame:
+            * show grey background
+            * show a dropping disk if there is one
+            * if mouse is pressed, display a red or yellow disk depending on if my_turn is True or False
+            * display the disks that are stored in disk_list. In the disk_list, 1 represents a red disk and 2 represents a yellow disk. Initial values in the list are 0s.
+            * draw the board after disks are displayed
+            * check game_over/win 
+        (2) Processing mouseReleased()
+            * Define mouseReleased() as when mouse is released, a Disk() object together with its color attribute and column attribute will be added into disk_buffer.
+            * This Disk() object will be displayed as a dropping disk in the next frame when do_dropping() method is called.
+            * In Homework pt2, mousePressed and mouseReleased will only control red disk, while yellow disk dropping is conditioned upon my_turn is False and the location to drop a yellow disk is based on AI algorithm
+        (3) GameController do_dropping()
+            * When do_dropping() is called at each frame, if the length of disk_buffer != 0, then a disk is ready to be dropped.
+            * To drop the disk, first find its start_column which is stored as its attribute
+            * Based on the column, its stop_row will be checked
+            * If there is no available row for the current column, clear disk_buffer, return
+            * Call drop_disk() method to display the dropping process based on the start_column, stop_row, and my_turn
+            * Once the disk is at the correct row, 
+                change the value in disk_list based on its color,
+                change my_turn to the opposite boolean value,
+                clear disk_buffer
+        (4) Disk drop_disk()
+            * When drop_disk() is called, set velocity to 10, 
+            * disk's y attribute increase 10 at every frame, while x attribute remains the same
+            * disk's y attribute keeps increasing until it reaches the stop_y
+        (5) GameController check_game_over()
+            Traverse disk_list, 
+            * if 4 consecutive 1s are found, then red wins.
+            * if 4 consecutive 2s are found, then yellow wins.
+            * if there is no 4 consecutive 1s or 2s, and there is no 0, then it is a tie.
+            * change game_over to True
+        (6) GameController reset()
+            * if game_over is True, reset the disk_list
+            * if red wins, prompt user to enter name and update score
+            * change game_over to False
+            * change my_turn to True
+
+
+    3.4. Pseudocode
+        connect_four.pyde
+        =================
+        """
+        Description: 
+            Processing screen setups and game initiation
+        Imported class:
+            GameController
+        Variables:
+            UNIT_LENGTH => length of side of one cube in the board
+            GAME_BOARD  => game background
+            game_controller = GameController(...)
+        Functions:
+            def setup() => Screen setups
+            def draw()  => Initiate background and update screen
+            def mouseReleased() => Handles mouse released
+        """
+        # below is pseudocode
+        import GameController
+
+        UNIT_LENGTH = 100
+        GAME_BOARD = {'w': 200, 'h': 300}
+
+        game_controller = GameController(GAME_BOARD, UNIT_LENGTH)
+
+        def setup():
+            size(GAME_BOARD['w'], GAME_BOARD['h'])
+            colorMode(RGB, 1)
+
+        def draw():
+            GREY = (0.75, 0.75, 0.75)
+
+            background(*GREY)
+            game_controller.update()
+        
+        def mouseReleased():
+            game_controller.handle_mouse_pressed(mouseX, mouseY)
+
+
+        game_controller.py
+        ==================
+        """
+        Description: 
+            GameController class
+        Imported class:
+            Disk
+            Board
+        Constructor:
+            def __init__(self, GAME_BOARD, UNIT_LENGTH):
+            self.UNIT_LENGTH = UNIT_LENGTH
+            self.GAME_BOARD = GAME_BOARD
+            self.board = Board(GAME_BOARD, UNIT_LENGTH, 'mini')
+            self.my_turn = True => Show and drop red disk if true, otherwise yellow.
+            self.disk_buffer = []  => Holds the disk that is ready to drop
+            self.game_over = False
+            self.winners = {} => store winner names and scores
+        Methods:
+            def update(self) => Updates the frame
+            def handle_mousePressed(self)  => Handle mousePressed
+            def handle_mouseReleased(self) => Handle mouseReleased
+            def do_dropping(self) => Display a dropping disk if there is one
+            def check_game_over(self, disk_list) => Check if game is over
+        """
+
+        # below is pseudocode
+        import Disk
+        import Board
+
+
+        class GameController():
+            def __init__(self, GAME_BOARD, UNIT_LENGTH):
+                self.UNIT_LENGTH = UNIT_LENGTH
+                self.GAME_BOARD = GAME_BOARD
+                self.game_over = False
+                self.board = Board(self.GAME_BOARD, UNIT_LENGTH, 'mini')
+                self.disk = Disk(self)
+                self.winners = {}
+                self.my_turn = True
+            
+            def update(self):
+                """Update game status"""
+                
+                # display a dropping disk if there is one
+                self.do_dropping()
+
+                # handle_mousePressed
+                if mousePressed:
+                    self.handle_mousePressed()
+
+                # display disks in the disk list
+                for i in range(self.board.ROW):
+                    for j in range(self.board.COLUMN):
+                        x = self.UNIT_LENGTH/2 + j*self.UNIT_LENGTH
+                        y = self.UNIT_LENGTH/2 + i*self.UNIT_LENGTH + self.UNIT_LENGTH
+                        if self.board.disk_list[i][j] == 1:
+                            d = Disk(self.GAME_BOARD, self.UNIT_LENGTH)
+                            d.draw_disk('red', x, y)
+                        elif self.board.disk_list[i][j] == 2:
+                            d = Disk(self.GAME_BOARD, self.UNIT_LENGTH, 'yellow')
+                            d.draw_disk('yellow', x, y)
+                
+                # display board
+                self.board.draw_board()
+
+                # check win/game_over
+                self.check_game_over(self.board.disk_list)
+
+                # updates winners dictionary
+            
+            def handle_mousePressed(self):
+                if self.game_over is True:
+                    return
+                elif (mouse is at the grey area above board):
+                    # Display corresponding disk
+                    d = Disk(self.GAME_BOARD, self.UNIT_LENGTH)
+                    d.display(mouseX, mouseY, self.my_turn)
+
+            def handle_mouseReleased(self):
+                if self.game_over is True:
+                    return
+                elif (mouse is at the grey area above board):
+                    j = self.board.find_column(mouseX, mouseY)
+                    if self.my_turn:
+                        self.disk_buffer.append(Disk(self.GAME_BOARD,
+                                                    self.UNIT_LENGTH,
+                                                    'red', j))
+                    elif not self.my_turn:
+                        self.disk_buffer.append(Disk(self.GAME_BOARD,
+                                                    self.UNIT_LENGTH,
+                                                    'yellow', j))
+
+            def do_dropping(self):
+                """Display a dropping disk if there is one"""
+                if len(self.disk_buffer) != 0:
+                    # step 1: find the correct column based on mouse location
+                    start_column = self.disk_buffer[0].column
+
+                    # step 2: find the correct row that the disk can stop
+                    stop_row = self.board.find_stop_row(start_column)
+                    if there is no available row to stop:
+                        clear self.disk_buffer
+                        return
+                    
+                    # step 3: call drop_disk() method given the start_column and stop_row
+                    self.disk_buffer[0].drop_disk(stop_row, start_column, self.my_turn)
+
+                    # step 4: when disk is at the correct location, change values in disk_list, switch my_turn, clear disk_buffer
+                    if self.disk_buffer[0].y == (self.UNIT_LENGTH/2 +
+                                                stop_row*self.UNIT_LENGTH +
+                                                self.UNIT_LENGTH):
+                        if self.my_turn:
+                            self.board.disk_list[stop_row][start_column] = 1
+                            self.my_turn = False
+                        elif not self.my_turn:
+                            self.board.disk_list[stop_row][start_column] = 2
+                            self.my_turn = True
+                        self.disk_buffer = []
+
+            def check_game_over(self, disk_list):
+                """Check if game is over"""
+                # Traverse the disk_list, if there is no 0, then there is no empty spot on board. 
+                for i in range(len(disk_list)):
+                    for j in range(len(disk_list[i])):
+                        if disk_list[i][j] == 0:
+                            return
+                self.game_over = True
+
+
+        board.py
+        ========
+        """
+        Description: 
+            Board class
+        Constructor:
+            def __init__(self, GAME_BOARD, UNIT_LENGTH, size='full'):
+                self.GAME_BOARD = GAME_BOARD
+                self.UNIT_LENGTH = UNIT_LENGTH
+                if size == 'mini':
+                    ROW = 2
+                    COLUMN = 2
+                else:
+                    ROW = 6
+                    COLUMN = 7
+                self.ROW = ROW
+                self.COLUMN = COLUMN
+                self.disk_list = []
+                for i in range(self.ROW):
+                    self.disk_list.append([])
+                    for j in range(self.COLUMN):
+                        self.disk_list[i].append(0)
+        Methods:
+            def draw_board() => Draw game board
+            def find_stop_row() => Finds the row that a disk should stop at
+            def find_column() => Finds the column on the game board based on mouse location
+        """
+
+        # below is pseudocode
+        class Board()
+            def __init__(self, GAME_BOARD, UNIT_LENGTH, size='full'):
+                self.GAME_BOARD = GAME_BOARD
+                self.UNIT_LENGTH = UNIT_LENGTH
+                if size == 'mini':
+                    ROW = 2
+                    COLUMN = 2
+                else:
+                    ROW = 6
+                    COLUMN = 7
+                self.ROW = ROW
+                self.COLUMN = COLUMN
+                self.disk_list = []
+                for i in range(self.ROW):
+                    self.disk_list.append([])
+                    for j in range(self.COLUMN):
+                        self.disk_list[i].append(0)
+
+            def draw_board(self, ROW, COLUMN):
+                """Draw game board"""
+                BLUE = (0, 0, 255)
+
+                strokeWeight(20)
+                stroke(*BLUE)
+                for j in range(ROW + 1):
+                    line(0, (j+1)*self.UNIT_LENGTH, self.COLUMN*self.UNIT_LENGTH,
+                        (j+1)*self.UNIT_LENGTH)
+                for i in range(COLUMN + 1):
+                    line(i*self.UNIT_LENGTH, self.UNIT_LENGTH, i*self.UNIT_LENGTH,
+                        (self.ROW+1)*self.UNIT_LENGTH)
+
+            def find_stop_row(self, j):
+                # Traverse the current column backwards, return the first row that has value 0
+                for i in range(len(self.disk_list)-1, -1, -1):
+                    if self.disk_list[i][j] == 0:
+                        return i
+                return -1
+
+            def find_column(self, mouseX, mouseY):
+                # Returns the column on the game board based on current mouse location
+                if mouseY > 0 and mouseY < self.UNIT_LENGTH:
+                    for j in range(self.COLUMN):
+                        if (mouseX > j*self.UNIT_LENGTH
+                        and mouseX < (j+1)*self.UNIT_LENGTH):
+                            return j
+
+
+        disk.py
+        =======
+        """
+        Description: 
+            Disk class
+        Constructor:
+            def __init__(self, GAME_BOARD, UNIT_LENGTH, color='red', column=0, y=50):
+            self.UNIT_LENGTH = UNIT_LENGTH
+            self.DIAMETER = self.UNIT_LENGTH * 9/10
+            self.YELLOW = (1.0, 1.0, 0)
+            self.RED = (1.0, 0, 0)
+            self.y_vel = 0
+            self.y = y
+            self.column = column
+            self.color = color
+        Methods:
+            def display() => Display the disk based on turns
+            def drop_disk() => Drops a disk
+            def draw_disk() => Draws a disk based given color and location 
+        """
+
+        # below is pseudocode
+        class Disk():
+            def __init__(self, GAME_BOARD, UNIT_LENGTH, color='red', column=0, y=50):
+                self.UNIT_LENGTH = UNIT_LENGTH
+                self.DIAMETER = self.UNIT_LENGTH * 9/10
+                self.YELLOW = (1.0, 1.0, 0)
+                self.RED = (1.0, 0, 0)
+                self.y_vel = 0
+                self.y = y
+                self.column = column
+                self.color = color
+
+            def display(self, x, y, my_turn):
+                # if it is my_turn, display red disk, otherwise, display yellow disk.
+                if my_turn:
+                    self.draw_disk('red', x, y)
+                elif not my_turn:
+                    self.draw_disk('yellow', x, y)
+
+            def drop_disk(self, stop_row, start_column, my_turn):
+                # display a dropping disk from the start_column and stop at the stop_row, if my_turn is True, drop red disk, otherwise, drop yellow disk.
+                VEL = 10
+                self.y_vel = VEL
+                self.y = self.y + self.y_vel
+                drop_x = self.UNIT_LENGTH/2 + start_column*self.UNIT_LENGTH
+                stop_y = self.UNIT_LENGTH/2 + stop_row*self.UNIT_LENGTH +\
+                    self.UNIT_LENGTH
+                if self.y < stop_y:
+                    self.display(drop_x, self.y, my_turn)
+                if self.y == stop_y:
+                    self.y_vel = 0
+                    self.display(drop_x, stop_y, my_turn)
+
+            def draw_disk(self, color, x, y):
+                noStroke()
+                if color == 'red':
+                    fill(*self.RED)
+                elif color == 'yellow':
+                    fill(*self.YELLOW)
+                ellipse(x, y, self.DIAMETER, self.DIAMETER)
