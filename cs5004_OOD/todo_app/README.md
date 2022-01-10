@@ -1,4 +1,0 @@
-## Assignment 9
-# Team U
-
-In the program we used the MVC(model view controller) design pattern. The controller folder includes CommandProcessor, ErrorLogger, FileProcessor, and InputProcessor. The view folder contains DisplayHelper and TodoApp. The model folder contains DueComparartor, PriorityComparator, Task, TaskData, TaskFilter. The controller interpres user’s action, so we included command and file processor in this package. The view creates a user interface, that’s why we have a Display helper to let the user see the interaction in the terminal. The model is for loading and storing the data, the class TaskData is responsible for storing all the tasks data. We also used Creational patterns, in the Task class, we use Builder class to construct Task objects, this allows us to build different Task objects based on the user's input. Using MVC design patterns allows us to make the code more modular.
